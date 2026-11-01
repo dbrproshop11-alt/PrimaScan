@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>PrimaScan — Roblox Account Analyzer</title>
+<style>
+:root{--bg:#090e1b;--panel:#111a2d;--panel2:#151f35;--line:#26334d;--text:#eef3ff;--muted:#93a2bd;--blue:#6d8cff;--cyan:#4dd6d0;--green:#50d6a0;--orange:#ffbd69}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 15% -10%,#1b2a50 0,transparent 38%),var(--bg);color:var(--text);font:14px/1.5 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+button,input{font:inherit}.app{max-width:1400px;margin:auto;padding:22px}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px}.brand{display:flex;align-items:center;gap:12px}.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#6d8cff,#4dd6d0);display:grid;place-items:center;color:#07101d;font-weight:900;font-size:19px}.brand h1{font-size:19px;margin:0;letter-spacing:.2px}.brand p{margin:2px 0 0;color:var(--muted);font-size:12px}.badge{border:1px solid #315a58;color:#8de8c8;background:#102b2a;padding:7px 11px;border-radius:99px;font-size:12px}
+.layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:18px}.side,.card,.mainpanel{background:rgba(17,26,45,.92);border:1px solid var(--line);border-radius:17px}.side{padding:17px;height:max-content;position:sticky;top:16px}.side h3{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1.3px;margin:4px 8px 12px}.nav{display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:10px;color:#b9c5dc;margin:3px 0}.nav.active{background:#202e50;color:white}.nav .ico{width:20px;text-align:center}.side .note{margin-top:22px;padding:12px;background:#101d31;border:1px solid #263d5a;border-radius:12px;color:var(--muted);font-size:12px}
+main{min-width:0}.welcome{display:flex;justify-content:space-between;align-items:flex-end;gap:15px;margin:3px 0 17px}.welcome h2{margin:0;font-size:23px}.welcome p{margin:5px 0 0;color:var(--muted)}.demo{font-size:11px;color:#ffd18c;border:1px solid #66502e;background:#302516;padding:5px 9px;border-radius:8px}
+.profile{display:flex;align-items:center;gap:15px;padding:18px;margin-bottom:15px}.avatar{width:65px;height:65px;border-radius:16px;background:linear-gradient(145deg,#384f82,#1b2945);display:grid;place-items:center;font-size:25px;font-weight:800}.profile h3{margin:0;font-size:18px}.profile p{margin:3px 0;color:var(--muted)}.profilemeta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.tag{font-size:11px;border:1px solid var(--line);padding:4px 8px;border-radius:7px;color:#b9c7df}.spacer{flex:1}.button{border:0;border-radius:10px;padding:10px 14px;background:linear-gradient(135deg,#6d8cff,#5675e8);color:white;font-weight:700;cursor:pointer}.button.secondary{background:#202c45;border:1px solid #344360}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:15px}.stat{padding:15px}.stat .label{color:var(--muted);font-size:12px}.stat .value{font-size:23px;font-weight:800;margin-top:6px}.stat small{color:var(--green);font-size:11px}.mainpanel{padding:18px}.sectionhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.sectionhead h3{margin:0;font-size:16px}.sectionhead span{color:var(--muted);font-size:12px}.toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}.search{flex:1;min-width:170px;background:#0c1425;border:1px solid var(--line);border-radius:9px;padding:10px 12px;color:var(--text);outline:none}.search:focus{border-color:var(--blue)}select{background:#0c1425;border:1px solid var(--line);border-radius:9px;padding:10px;color:var(--text)}
+.categories{display:flex;gap:7px;overflow:auto;padding-bottom:12px;margin-bottom:10px}.cat{white-space:nowrap;border:1px solid var(--line);background:#0d1628;color:#aebbd2;padding:7px 10px;border-radius:9px;cursor:pointer;font-size:12px}.cat.active{background:#263b68;border-color:#4969ac;color:white}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.item{background:#0d1628;border:1px solid #26344e;border-radius:13px;overflow:hidden;min-width:0}.thumb{height:116px;display:grid;place-items:center;background:linear-gradient(135deg,#1a2944,#111b30);font-size:35px;position:relative}.thumb small{position:absolute;right:8px;top:8px;background:#080e1bba;border:1px solid #3b4a65;padding:3px 6px;border-radius:6px;font-size:9px;color:#b9c8e2}.itembody{padding:10px}.itemname{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.itemtype{color:var(--muted);font-size:11px;margin-top:2px}.itemvalue{color:#8fe0c0;font-size:12px;margin-top:8px}.empty{padding:35px;text-align:center;color:var(--muted);display:none}.foot{color:#6f7e99;text-align:center;font-size:11px;margin:17px 0 3px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.side{position:static;display:none}.stats{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:560px){.app{padding:14px}.top{margin-bottom:17px}.welcome{align-items:flex-start;flex-direction:column}.welcome h2{font-size:20px}.profile{flex-wrap:wrap}.profile .spacer{display:none}.profile .button{width:100%}.stats{gap:8px}.stat{padding:12px}.stat .value{font-size:19px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.thumb{height:105px}.mainpanel{padding:13px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top">
+  <div class="brand"><div class="logo">P</div><div><h1>PrimaScan</h1><p>Roblox Account Analyzer</p></div></div>
+  <div class="badge">● Dashboard Preview</div>
+</header>
+<div class="layout">
+<aside class="side">
+  <h3>Workspace</h3>
+  <div class="nav active"><span class="ico">▦</span> Overview</div>
+  <div class="nav"><span class="ico">▤</span> Inventory</div>
+  <div class="nav"><span class="ico">◇</span> Limited & Collectibles</div>
+  <div class="nav"><span class="ico">♧</span> Game Passes</div>
+  <div class="nav"><span class="ico">◷</span> Scan History</div>
+  <div class="note">Mode demo: data di bawah hanya contoh tampilan. Belum terhubung ke akun Roblox.</div>
+</aside>
+<main>
+  <div class="welcome"><div><h2>Account Overview</h2><p>Ringkasan akun dan koleksi item Roblox.</p></div><span class="demo">SAMPLE DATA</span></div>
+  <section class="card profile">
+    <div class="avatar">P</div><div><h3>PrimaExample</h3><p>@prima_example · User ID: 123456789</p><div class="profilemeta"><span class="tag">Account age: 5 years</span><span class="tag">Premium: Unknown</span><span class="tag">Inventory: Public demo</span></div></div><div class="spacer"></div><button class="button" id="scanBtn">＋ New Scan</button>
+  </section>
+  <section class="stats">
+    <div class="card stat"><div class="label">Total Items</div><div class="value" id="totalItems">128</div><small>Across visible categories</small></div>
+    <div class="card stat"><div class="label">Limited Items</div><div class="value">12</div><small>Sample count</small></div>
+    <div class="card stat"><div class="label">Total RAP</div><div class="value">25.4K</div><small>Illustrative only</small></div>
+    <div class="card stat"><div class="label">Estimated Value</div><div class="value">$250</div><small>Not a guaranteed sale price</small></div>
+  </section>
+  <section class="mainpanel">
+    <div class="sectionhead"><div><h3>Inventory Collection</h3><span>Browse items by category</span></div><span id="itemCount">8 items shown</span></div>
+    <div class="toolbar"><input class="search" id="search" placeholder="Search item name..." aria-label="Search item name"><select id="sort"><option value="name">Sort: Name</option><option value="value">Sort: Value</option></select></div>
+    <div class="categories" id="categories"></div>
+    <div class="grid" id="grid"></div><div class="empty" id="empty">Tidak ada item yang cocok.</div>
+  </section>
+  <div class="foot">PrimaScan · Preview interface · Secure, permission-based account access only</div>
+</main>
+</div>
+</div>
+<script>
+const items=[
+ {name:"Stylish Animation Pack",type:"Animations",icon:"🕺",value:750},
+ {name:"Ninja Animation Pack",type:"Animations",icon:"🥷",value:500},
+ {name:"Sparkling Aura",type:"Special FX",icon:"✨",value:1200},
+ {name:"Crimson Wings",type:"Accessories",icon:"🪽",value:850},
+ {name:"Classic Fedora",type:"Accessories",icon:"🎩",value:300},
+ {name:"Limited Shades",type:"Limited Items",icon:"🕶️",value:4200,limited:true},
+ {name:"Golden Crown",type:"Limited Items",icon:"👑",value:8900,limited:true},
+ {name:"Explorer Bundle",type:"Bundles",icon:"🧑‍🚀",value:1600},
+ {name:"Happy Face",type:"Faces",icon:"🙂",value:250},
+ {name:"Dance Emote",type:"Emotes",icon:"💃",value:400},
+ {name:"Speed Boost Pass",type:"Game Passes",icon:"🎟️",value:null},
+ {name:"Champion Badge",type:"Badges",icon:"🏅",value:null}
+];
+const cats=["All","Animations","Special FX","Limited Items","Accessories","Faces","Bundles","Emotes","Game Passes","Badges"];
+let active="All";
+const grid=document.getElementById("grid"), search=document.getElementById("search");
+function renderCats(){document.getElementById("categories").innerHTML=cats.map(c=>`<button class="cat ${active===c?'active':''}" data-cat="${c}">${c}</button>`).join("");document.querySelectorAll(".cat").forEach(b=>b.onclick=()=>{active=b.dataset.cat;renderCats();renderItems()})}
+function renderItems(){let q=search.value.toLowerCase();let list=items.filter(i=>(active==="All"||i.type===active)&&i.name.toLowerCase().includes(q));if(document.getElementById("sort").value==="value")list.sort((a,b)=>(b.value||0)-(a.value||0));else list.sort((a,b)=>a.name.localeCompare(b.name));grid.innerHTML=list.map(i=>`<article class="item"><div class="thumb">${i.icon}<small>${i.limited?"LIMITED":i.type.toUpperCase()}</small></div><div class="itembody"><div class="itemname" title="${i.name}">${i.name}</div><div class="itemtype">${i.type}</div><div class="itemvalue">${i.value===null?"Value unavailable":"Est. R$ "+i.value.toLocaleString("en-US")}</div></div></article>`).join("");document.getElementById("empty").style.display=list.length?"none":"block";document.getElementById("itemCount").textContent=`${list.length} items shown`}
+search.addEventListener("input",renderItems);document.getElementById("sort").addEventListener("change",renderItems);renderCats();renderItems();
+document.getElementById("scanBtn").onclick=()=>alert("Preview dashboard saja. Tahap berikutnya adalah menambahkan backend dan autentikasi Roblox resmi dengan izin pemilik akun.");
+</script>
+</body>
+</html>
