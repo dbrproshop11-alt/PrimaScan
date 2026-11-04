@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+:root{color-scheme:dark;--bg:#0d1017;--panel:#151a24;--panel2:#1b2230;--line:#293244;--muted:#8e9aae;--text:#edf2fa;--accent:#8b7cff;--accent2:#6c5ce7}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+.app-shell{min-height:100vh;display:flex}
+.sidebar{width:270px;flex-shrink:0;border-right:1px solid var(--line);background:#11151e;padding:22px 16px;display:flex;flex-direction:column;gap:22px}
+.brand{display:flex;align-items:center;gap:11px;font-size:18px;font-weight:750;letter-spacing:-.5px;padding:4px 8px}
+.brand-mark{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,#a394ff,#6554dc);display:grid;place-items:center;color:white;font-weight:900}
+.workspace-label,.eyebrow{font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.workspace-head{display:flex;align-items:center;justify-content:space-between;padding:0 8px;margin-bottom:9px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:9px;color:#bdc7d8;font-size:13px;margin:2px 0}
+.nav-item.active{background:#282342;color:#c8c0ff}
+.nav-item:hover{background:var(--panel2)}
+.side-bottom{margin-top:auto;border-top:1px solid var(--line);padding-top:15px}
+.main-area{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{height:66px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 30px;gap:14px}
+.breadcrumb{font-size:13px;color:var(--muted)}
+.content{width:min(100%,1000px);padding:38px 34px;margin:0 auto;flex:1}
+.welcome{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:28px}
+h1{font-size:28px;letter-spacing:-1px;margin:0 0 8px}
+.subtle{color:var(--muted);font-size:13px;line-height:1.6}
+.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:10px 14px;border-radius:9px;font-size:12px;font-weight:650}
+.btn.primary{background:var(--accent2);border-color:var(--accent2);color:white}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:17px}
+.card-title{font-size:14px;font-weight:700;margin-bottom:7px}
+.card-meta{font-size:11px;color:var(--muted)}
+.empty{border:1px dashed #39445a;border-radius:14px;padding:34px;text-align:center;background:#121722}
+.empty-icon{font-size:26px;margin-bottom:12px}
+.auth-wrap{min-height:100vh;display:grid;place-items:center;padding:22px;background:radial-gradient(ellipse at 50% 0%,#282044 0%,#0d1017 55%)}
+.auth-card{width:min(100%,420px);background:#151a24;border:1px solid var(--line);border-radius:18px;padding:30px;box-shadow:0 24px 80px #0006}
+.auth-card h1{font-size:25px;margin:22px 0 8px}
+.field{display:flex;flex-direction:column;gap:7px;margin:15px 0}
+.field label{font-size:12px;color:#bac4d5}
+.field input,.editor-input{width:100%;background:#0f131c;border:1px solid var(--line);border-radius:9px;padding:12px;color:var(--text);outline:none}
+.field input:focus,.editor-input:focus{border-color:var(--accent)}
+.error{color:#ff9caa;font-size:12px;margin-top:10px}
+.success{color:#8fe0bd;font-size:12px;margin-top:10px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0}
+.editor{min-height:360px;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:20px}
+.editor textarea{width:100%;min-height:320px;resize:vertical;border:0;outline:0;background:transparent;color:var(--text);font-size:15px;line-height:1.8}
+.mobile-menu{display:none}
+@media(max-width:760px){.sidebar{width:68px;padding:18px 9px;align-items:center}.brand{padding:0}.brand-name,.workspace-label,.workspace-head span,.nav-label,.side-caption{display:none}.nav-item{justify-content:center;width:46px;padding:12px 0}.topbar{padding:0 16px;height:58px}.content{padding:26px 16px}.welcome{flex-direction:column}h1{font-size:24px}.sidebar .brand-mark{flex-shrink:0}.side-bottom{width:100%}}
