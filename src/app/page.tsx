@@ -159,7 +159,7 @@ export default function Home() {
     event.preventDefault(); if (!supabase) { setError("Supabase belum dikonfigurasi."); return; } setBusy(true); setError(""); setMessage("");
     try {
       if (mode === "signup") {
-        const { error: signError } = await supabase.auth.signUp({ email, password, options: { data: { display_name: displayName } } });
+        const { error: signError } = await supabase.auth.signUp({ email, password, options: { data: { display_name: displayName }, emailRedirectTo: window.location.origin } });
         if (signError) throw signError;
         setMessage("Pendaftaran berhasil. Periksa email jika konfirmasi email diaktifkan.");
       } else {
