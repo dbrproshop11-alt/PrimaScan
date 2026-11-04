@@ -90,7 +90,7 @@ export default function Home() {
     const { data: books, error: bookError } = await supabase.from("notebooks").select("id,workspace_id,title,position").eq("workspace_id", activeWorkspace).order("position");
     if (bookError) { setError(bookError.message); return; }
     setNotebooks(books || []);
-    const activeBook = (books || []).some((b: any) => b.id === notebookId) ? notebookId : books?.[0]?.id || "";
+    const activeBook = (books || []).some((b: any) => b.id === preferredNotebookId) ? preferredNotebookId : books?.[0]?.id || "";
     setNotebookId(activeBook);
     if (!activeBook) { setPages([]); setPageId(""); return; }
     const { data: docs, error: pageError } = await supabase.from("pages").select("id,notebook_id,title,content,position,updated_at").eq("notebook_id", activeBook).order("position");
@@ -129,7 +129,7 @@ export default function Home() {
     else {
       const { error: memberError } = await supabase.from("workspace_members").insert({ workspace_id: data.id, user_id: session.user.id, role: "editor" });
       if (memberError) setError(memberError.message);
-      setNewWorkspace(""); await loadData();
+      setNewWorkspace(""); await loadData(data.id, "", "");
     }
     setBusy(false);
   }
@@ -143,7 +143,7 @@ export default function Home() {
     else {
       const { error: memberError } = await supabase.from("workspace_members").insert({ workspace_id: data.id, user_id: session.user.id, role: "editor" });
       if (memberError) setError(memberError.message);
-      await loadData();
+      await loadData(data.id, "", "");
     }
     setBusy(false);
   }
