@@ -189,10 +189,13 @@ export default function Home() {
   async function createWorkspace(event: React.FormEvent) {
     event.preventDefault(); if (!supabase || !newWorkspace.trim() || !session) return;
     setBusy(true); setError("");
-    const { data, error: createError } = await supabase.from("workspaces").insert({ name: newWorkspace.trim(), owner_id: session.user.id }).select("id").single();
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    const currentUser = authData.user;
+    if (authError || !currentUser) { setError("Sesi login tidak valid. Silakan keluar lalu masuk kembali."); setBusy(false); return; }
+    const { data, error: createError } = await supabase.from("workspaces").insert({ name: newWorkspace.trim(), owner_id: currentUser.id }).select("id").single();
     if (createError || !data) { setError(createError?.message || "Workspace gagal dibuat."); }
     else {
-      const { error: memberError } = await supabase.from("workspace_members").insert({ workspace_id: data.id, user_id: session.user.id, role: "editor" });
+      const { error: memberError } = await supabase.from("workspace_members").insert({ workspace_id: data.id, user_id: currentUser.id, role: "editor" });
       if (memberError) setError(memberError.message);
       setNewWorkspace(""); await loadData(data.id, "", "");
     }
@@ -203,10 +206,13 @@ export default function Home() {
     const name = window.prompt("Nama workspace baru");
     if (!supabase || !name?.trim() || !session) return;
     setBusy(true); setError("");
-    const { data, error: createError } = await supabase.from("workspaces").insert({ name: name.trim(), owner_id: session.user.id }).select("id").single();
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    const currentUser = authData.user;
+    if (authError || !currentUser) { setError("Sesi login tidak valid. Silakan keluar lalu masuk kembali."); setBusy(false); return; }
+    const { data, error: createError } = await supabase.from("workspaces").insert({ name: name.trim(), owner_id: currentUser.id }).select("id").single();
     if (createError || !data) { setError(createError?.message || "Workspace gagal dibuat."); }
     else {
-      const { error: memberError } = await supabase.from("workspace_members").insert({ workspace_id: data.id, user_id: session.user.id, role: "editor" });
+      const { error: memberError } = await supabase.from("workspace_members").insert({ workspace_id: data.id, user_id: currentUser.id, role: "editor" });
       if (memberError) setError(memberError.message);
       await loadData(data.id, "", "");
     }
