@@ -21,6 +21,9 @@
     "@types/react-dom": "19.2.3",
     "eslint": "9.39.1",
     "eslint-config-next": "16.4.4",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "@tailwindcss/postcss": "4.3.4",
+    "tailwindcss": "4.3.4",
+    "postcss": "8.5.32"
   }
 }
