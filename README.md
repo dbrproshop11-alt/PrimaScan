@@ -5,7 +5,7 @@ A collaborative notebook workspace built with Next.js and Supabase.
 ## Stack
 
 - Next.js App Router + React + TypeScript
-- Supabase Auth and Postgres with Row Level Security
+- Supabase Auth, Postgres, Row Level Security, and Realtime
 - Tailwind CSS v4
 - Vercel deployment
 
@@ -13,30 +13,30 @@ A collaborative notebook workspace built with Next.js and Supabase.
 
 1. Use Node.js 22 or later.
 2. Install dependencies with `npm install`.
-3. Copy `.env.example` to `.env.local`.
-4. Set the Supabase project URL and publishable key.
-5. Start the app with `npm run dev`.
+3. Start the app with `npm run dev`.
 
-Required environment variables:
+The connected Prima Notebook Supabase project is configured as the default client. To override it for another environment, copy `.env.example` to `.env.local` and set:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
-Never put a Supabase service-role or secret key in a `NEXT_PUBLIC_` variable or in this repository.
+The browser uses only the public publishable key. Never put a Supabase service-role or secret key in a `NEXT_PUBLIC_` variable or in this repository. Row Level Security must remain enabled.
 
 ## Current MVP
 
 - Email/password registration and login
 - Workspace creation and selection
-- Notebook creation
-- Page creation, title editing, and saving page content
+- Notebook and page creation
+- Page title editing
+- Automatic saving of page content
+- Live page updates through Supabase Realtime
 - Responsive dark interface
 
 ## Next milestones
 
-- Rich-text editor (TipTap)
-- Realtime collaboration and online presence (Yjs + Supabase Realtime)
+- Rich-text editor (TipTap) with headings, lists, tables, and checklists
+- Yjs-based concurrent collaborative editing and presence
 - Workspace invitations and share permissions
-- Autosave, image uploads, checklists, and tables
+- Image uploads and light/dark theme switching
 
-The Supabase database schema is already present in the connected project. Keep Row Level Security enabled for all user-facing tables.
+The database schema is already present in the connected Supabase project.
