@@ -5,7 +5,8 @@ import { createClient } from "@/lib/supabase/client";
 
 type Workspace = { id: string; name: string; owner_id: string };
 type Notebook = { id: string; workspace_id: string; title: string; position: number };
-type Page = { id: string; notebook_id: string; title: string; content: any; position: number; updated_at: string };
+type Page = { id: string; notebook_id: string; title: string; content: any; position: number; updated_at: string; updated_by?: string | null };
+type DocumentNode = { type: string; text?: string; content?: DocumentNode[] };
 
 const supabase = (() => { try { return createClient(); } catch { return null; } })();
 
@@ -21,17 +22,16 @@ function getText(content: any): string {
   return walk(content).trim();
 }
 
-function toDocument(value: string) {
-  return {
-    type: "doc",
-    content: value.split(/\n{2,}/).filter(Boolean).map((paragraph) => ({
-      type: "paragraph",
-      content: paragraph.split("\n").flatMap((line, index) => [
-        ...(index ? [{ type: "hardBreak" }] : []),
-        ...(line ? [{ type: "text", text: line }] : []),
-      ]),
-    })).concat(value.trim() ? [] : [{ type: "paragraph" }]),
-  };
+function toDocument(value: string): DocumentNode {
+  const content: DocumentNode[] = value.split(/\\n{2,}/).filter(Boolean).map((paragraph) => ({
+    type: "paragraph",
+    content: paragraph.split("\\n").flatMap((line, index): DocumentNode[] => [
+      ...(index ? [{ type: "hardBreak" }] : []),
+      ...(line ? [{ type: "text", text: line }] : []),
+    ]),
+  }));
+  if (!content.length) content.push({ type: "paragraph" });
+  return { type: "doc", content };
 }
 
 export default function Home() {
@@ -63,11 +63,11 @@ export default function Home() {
       setAuthLoading(false);
       return;
     }
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(({ data }: { data: { session: any } }) => {
       setSession(data.session);
       setAuthLoading(false);
     });
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession));
+    const { data } = supabase.auth.onAuthStateChange((_event: string, nextSession: any) => setSession(nextSession));
     return () => data.subscription.unsubscribe();
   }, []);
 
@@ -120,7 +120,7 @@ export default function Home() {
         schema: "public",
         table: "pages",
         filter: "id=eq." + pageId,
-      }, (payload) => {
+      }, (payload: { new: Page }) => {
         const incoming = payload.new as Page;
         if (incoming.updated_by === session?.user?.id) return;
         if (draftRef.current !== getText(savedContentRef.current)) {
