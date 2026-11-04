@@ -7,7 +7,7 @@ type Workspace = { id: string; name: string; owner_id: string };
 type Notebook = { id: string; workspace_id: string; title: string; position: number };
 type Page = { id: string; notebook_id: string; title: string; content: any; position: number; updated_at: string };
 
-const supabase = createClient();
+const supabase = (() => { try { return createClient(); } catch { return null; } })();
 
 function getText(content: any): string {
   if (!content) return "";
@@ -58,6 +58,11 @@ export default function Home() {
   const [lastSaved, setLastSaved] = useState("");
 
   useEffect(() => {
+    if (!supabase) {
+      setError("Aplikasi belum terhubung ke Supabase. Tambahkan URL dan publishable key di Environment Variables Vercel.");
+      setAuthLoading(false);
+      return;
+    }
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setAuthLoading(false);
@@ -67,7 +72,7 @@ export default function Home() {
   }, []);
 
   const loadData = useCallback(async () => {
-    if (!session?.user?.id) return;
+    if (!supabase || !session?.user?.id) return;
     setError("");
     const { data: memberships, error: membershipError } = await supabase
       .from("workspace_members").select("workspace_id").eq("user_id", session.user.id);
@@ -102,7 +107,7 @@ export default function Home() {
   const selectedPage = useMemo(() => pages.find((p) => p.id === pageId), [pages, pageId]);
 
   async function authenticate(event: React.FormEvent) {
-    event.preventDefault(); setBusy(true); setError(""); setMessage("");
+    event.preventDefault(); if (!supabase) { setError("Supabase belum dikonfigurasi."); return; } setBusy(true); setError(""); setMessage("");
     try {
       if (mode === "signup") {
         const { error: signError } = await supabase.auth.signUp({ email, password, options: { data: { display_name: displayName } } });
@@ -117,7 +122,7 @@ export default function Home() {
   }
 
   async function createWorkspace(event: React.FormEvent) {
-    event.preventDefault(); if (!newWorkspace.trim() || !session) return;
+    event.preventDefault(); if (!supabase || !newWorkspace.trim() || !session) return;
     setBusy(true); setError("");
     const { data, error: createError } = await supabase.from("workspaces").insert({ name: newWorkspace.trim(), owner_id: session.user.id }).select("id").single();
     if (createError) setError(createError.message);
@@ -131,7 +136,7 @@ export default function Home() {
 
   async function createWorkspaceQuick() {
     const name = window.prompt("Nama workspace baru");
-    if (!name?.trim() || !session) return;
+    if (!supabase || !name?.trim() || !session) return;
     setBusy(true); setError("");
     const { data, error: createError } = await supabase.from("workspaces").insert({ name: name.trim(), owner_id: session.user.id }).select("id").single();
     if (createError) setError(createError.message);
@@ -144,7 +149,7 @@ export default function Home() {
   }
 
   async function createNotebook(event: React.FormEvent) {
-    event.preventDefault(); if (!newNotebook.trim() || !workspaceId || !session) return;
+    event.preventDefault(); if (!supabase || !newNotebook.trim() || !workspaceId || !session) return;
     setBusy(true);
     const { error: createError } = await supabase.from("notebooks").insert({ title: newNotebook.trim(), workspace_id: workspaceId, created_by: session.user.id, position: notebooks.length });
     if (createError) setError(createError.message); else { setNewNotebook(""); await loadData(); }
@@ -152,7 +157,7 @@ export default function Home() {
   }
 
   async function createPage(event: React.FormEvent) {
-    event.preventDefault(); if (!newPage.trim() || !notebookId || !session) return;
+    event.preventDefault(); if (!supabase || !newPage.trim() || !notebookId || !session) return;
     setBusy(true);
     const { error: createError } = await supabase.from("pages").insert({ title: newPage.trim(), notebook_id: notebookId, created_by: session.user.id, updated_by: session.user.id, position: pages.length });
     if (createError) setError(createError.message); else { setNewPage(""); await loadData(); }
@@ -160,7 +165,7 @@ export default function Home() {
   }
 
   async function savePage() {
-    if (!selectedPage || !session) return;
+    if (!supabase || !selectedPage || !session) return;
     setSaving(true); setError("");
     const { error: saveError } = await supabase.from("pages").update({ content: toDocument(draft), updated_by: session.user.id, updated_at: new Date().toISOString() }).eq("id", selectedPage.id);
     if (saveError) setError(saveError.message);
@@ -169,7 +174,7 @@ export default function Home() {
   }
 
   async function renamePage(title: string) {
-    if (!selectedPage || !title.trim()) return;
+    if (!supabase || !selectedPage || !title.trim()) return;
     const { error: renameError } = await supabase.from("pages").update({ title: title.trim() }).eq("id", selectedPage.id);
     if (renameError) setError(renameError.message);
     else setPages((old) => old.map((p) => p.id === selectedPage.id ? { ...p, title: title.trim() } : p));
@@ -208,7 +213,7 @@ export default function Home() {
           {notebooks.map((b) => <button key={b.id} className={"nav-item " + (notebookId === b.id ? "active" : "")} style={{ width: "100%", border: 0, background: notebookId === b.id ? "#282342" : "transparent", textAlign: "left" }} onClick={() => { setNotebookId(b.id); setPageId(""); }}>{notebookId === b.id ? "▾" : "▸"}<span className="nav-label">{b.title}</span></button>)}
           {workspaceId && <form onSubmit={createNotebook} style={{ display: "flex", gap: 5, marginTop: 8 }}><input aria-label="Nama notebook" value={newNotebook} onChange={(e) => setNewNotebook(e.target.value)} placeholder="+ Notebook baru" className="editor-input" style={{ padding: "8px", fontSize: 11, minWidth: 0 }} /><button className="btn" style={{ padding: "6px 8px" }} disabled={busy}>+</button></form>}
         </div>
-        <div className="side-bottom"><div className="nav-item"><span>◉</span><span className="nav-label">{session.user.email}</span></div><button className="nav-item" style={{ width: "100%", border: 0, background: "transparent", textAlign: "left" }} onClick={() => supabase.auth.signOut()}><span>↪</span><span className="nav-label">Keluar</span></button></div>
+        <div className="side-bottom"><div className="nav-item"><span>◉</span><span className="nav-label">{session.user.email}</span></div><button className="nav-item" style={{ width: "100%", border: 0, background: "transparent", textAlign: "left" }} onClick={() => { if (supabase) void supabase.auth.signOut(); }}><span>↪</span><span className="nav-label">Keluar</span></button></div>
       </aside>
       <section className="main-area">
         <header className="topbar"><div className="breadcrumb">Workspace / {workspaces.find((w) => w.id === workspaceId)?.name || "Pilih workspace"} / {notebooks.find((b) => b.id === notebookId)?.title || "Notebook"}</div><div className="card-meta">● Tersimpan di cloud</div></header>
