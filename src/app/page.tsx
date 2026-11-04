@@ -237,6 +237,55 @@ export default function Home() {
     else setPages((old) => old.map((p) => p.id === selectedPage.id ? { ...p, title: title.trim() } : p));
   }
 
+  async function deleteWorkspace() {
+    const selectedWorkspace = workspaces.find((w) => w.id === workspaceId);
+    if (!supabase || !selectedWorkspace || selectedWorkspace.owner_id !== session?.user?.id) return;
+    if (!window.confirm(`Hapus workspace "${selectedWorkspace.name}" beserta semua notebook dan halaman di dalamnya? Tindakan ini tidak bisa dibatalkan.`)) return;
+    setBusy(true); setError("");
+    const { error: deleteError } = await supabase.from("workspaces").delete().eq("id", selectedWorkspace.id).eq("owner_id", session.user.id);
+    if (deleteError) setError(deleteError.message);
+    else {
+      setWorkspaceId(""); setNotebookId(""); setPageId(""); setDraft("");
+      await loadData("", "", "");
+      setMessage("Workspace dan seluruh isinya berhasil dihapus.");
+    }
+    setBusy(false);
+  }
+
+  async function deletePage() {
+    if (!supabase || !selectedPage) return;
+    if (!window.confirm(`Hapus halaman "${selectedPage.title}"? Tindakan ini tidak bisa dibatalkan.`)) return;
+    setBusy(true); setError("");
+    const { error: deleteError } = await supabase.from("pages").delete().eq("id", selectedPage.id);
+    if (deleteError) setError(deleteError.message);
+    else {
+      setPageId(""); setDraft("");
+      await loadData(workspaceId, notebookId, "");
+      setMessage("Halaman berhasil dihapus.");
+    }
+    setBusy(false);
+  }
+
+  async function clearPageText() {
+    if (!supabase || !selectedPage || !session) return;
+    if (!window.confirm(`Hapus semua teks di halaman "${selectedPage.title}"? Judul halaman tetap ada.`)) return;
+    setSaving(true); setError("");
+    const emptyDocument = { type: "doc", content: [{ type: "paragraph" }] };
+    const { error: clearError } = await supabase.from("pages").update({
+      content: emptyDocument,
+      updated_by: session.user.id,
+      updated_at: new Date().toISOString(),
+    }).eq("id", selectedPage.id);
+    if (clearError) setError(clearError.message);
+    else {
+      setDraft("");
+      setPages((old) => old.map((p) => p.id === selectedPage.id ? { ...p, content: emptyDocument, updated_at: new Date().toISOString(), updated_by: session.user.id } : p));
+      setLastSaved(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
+      setMessage("Semua teks di halaman berhasil dihapus.");
+    }
+    setSaving(false);
+  }
+
   if (authLoading) return <div className="auth-wrap"><div className="subtle">Memuat Prima Notebook…</div></div>;
 
   if (!session) return (
@@ -279,9 +328,9 @@ export default function Home() {
           {error && <p className="error">{error}</p>}
           {!workspaces.length ? <div className="empty"><div className="empty-icon">✦</div><h1>Mulai workspace pertamamu</h1><p className="subtle">Buat ruang untuk mengatur notebook dan catatanmu.</p><form onSubmit={createWorkspace} style={{ display: "flex", gap: 8, maxWidth: 420, margin: "22px auto 0" }}><input className="editor-input" value={newWorkspace} onChange={(e) => setNewWorkspace(e.target.value)} placeholder="Contoh: Personal atau Tim Prima" required /><button className="btn primary" disabled={busy}>Buat</button></form></div>
           : !notebooks.length ? <div className="empty"><div className="empty-icon">▤</div><h1>Buat notebook pertamamu</h1><p className="subtle">Notebook membantu memisahkan catatan berdasarkan topik.</p><form onSubmit={createNotebook} style={{ display: "flex", gap: 8, maxWidth: 420, margin: "22px auto 0" }}><input className="editor-input" value={newNotebook} onChange={(e) => setNewNotebook(e.target.value)} placeholder="Nama notebook" required /><button className="btn primary" disabled={busy}>Buat</button></form></div>
-          : <><div className="welcome"><div><div className="eyebrow">Ruang kerja kamu</div><h1>{selectedPage?.title || "Catatan dan ide"}</h1><p className="subtle">Simpan pemikiranmu dan lanjutkan kapan saja.</p></div><form onSubmit={createPage} style={{ display: "flex", gap: 8, alignItems: "center" }}><input className="editor-input" style={{ width: 150, padding: 9, fontSize: 12 }} value={newPage} onChange={(e) => setNewPage(e.target.value)} placeholder="Nama halaman baru" /><button className="btn primary" disabled={busy}>+ Halaman</button></form></div>
+          : <><div className="welcome"><div><div className="eyebrow">Ruang kerja kamu</div><h1>{selectedPage?.title || "Catatan dan ide"}</h1><p className="subtle">Simpan pemikiranmu dan lanjutkan kapan saja.</p></div><div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}><form onSubmit={createPage} style={{ display: "flex", gap: 8, alignItems: "center" }}><input className="editor-input" style={{ width: 150, padding: 9, fontSize: 12 }} value={newPage} onChange={(e) => setNewPage(e.target.value)} placeholder="Nama halaman baru" /><button className="btn primary" disabled={busy}>+ Halaman</button></form>{workspaces.find((w) => w.id === workspaceId)?.owner_id === session.user.id && <button className="btn" style={{ color: "#f28b9b", borderColor: "#713b49" }} onClick={deleteWorkspace} disabled={busy}>Hapus workspace</button>}</div></div>
           <div className="grid-cards" style={{ marginBottom: 20 }}>{pages.map((p) => <button key={p.id} className="card" style={{ textAlign: "left", borderColor: pageId === p.id ? "#8173ef" : undefined }} onClick={() => { setPageId(p.id); setDraft(getText(p.content)); }}><div className="card-title">▤ {p.title}</div><div className="card-meta">Diperbarui {new Date(p.updated_at).toLocaleDateString("id-ID")}</div></button>)}</div>
-          {selectedPage ? <><div className="toolbar"><button className="btn" onClick={() => { const title = window.prompt("Ubah judul halaman", selectedPage.title); if (title) void renamePage(title); }}>Ubah judul</button><button className="btn primary" onClick={savePage} disabled={saving}>{saving ? "Menyimpan…" : "Simpan perubahan"}</button><span className="card-meta" style={{ alignSelf: "center" }}>{saving ? "Menyimpan…" : lastSaved ? "Terakhir disimpan " + lastSaved : "Autosave aktif"}</span></div><div className="editor"><textarea value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Mulai tulis catatanmu di sini…" /></div></> : <div className="empty"><div className="empty-icon">✎</div><h2 style={{ fontSize: 18 }}>Pilih atau buat halaman</h2><p className="subtle">Semua catatan dalam notebook ini akan muncul di sini.</p></div>}
+          {selectedPage ? <><div className="toolbar"><button className="btn" onClick={() => { const title = window.prompt("Ubah judul halaman", selectedPage.title); if (title) void renamePage(title); }}>Ubah judul</button><button className="btn" onClick={clearPageText} disabled={saving || busy}>Hapus semua teks</button><button className="btn" style={{ color: "#f28b9b", borderColor: "#713b49" }} onClick={deletePage} disabled={saving || busy}>Hapus halaman</button><button className="btn primary" onClick={savePage} disabled={saving || busy}>{saving ? "Menyimpan…" : "Simpan perubahan"}</button><span className="card-meta" style={{ alignSelf: "center" }}>{saving ? "Menyimpan…" : lastSaved ? "Terakhir disimpan " + lastSaved : "Autosave aktif"}</span></div><div className="editor"><textarea value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Mulai tulis catatanmu di sini…" /></div></> : <div className="empty"><div className="empty-icon">✎</div><h2 style={{ fontSize: 18 }}>Pilih atau buat halaman</h2><p className="subtle">Semua catatan dalam notebook ini akan muncul di sini.</p></div>}
           </>}
         </div>
       </section>
