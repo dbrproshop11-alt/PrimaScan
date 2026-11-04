@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type Workspace = { id: string; name: string; owner_id: string };
@@ -105,6 +105,30 @@ export default function Home() {
   useEffect(() => { if (session) void loadData(); }, [session, loadData]);
 
   const selectedPage = useMemo(() => pages.find((p) => p.id === pageId), [pages, pageId]);
+
+  const draftRef = useRef(draft);
+  useEffect(() => { draftRef.current = draft; }, [draft]);
+
+  useEffect(() => {
+    if (!supabase || !pageId) return;
+    const channel = supabase
+      .channel("page-live-" + pageId)
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "pages",
+        filter: "id=eq." + pageId,
+      }, (payload) => {
+        const incoming = payload.new as Page;
+        setPages((old) => old.map((p) => p.id === incoming.id ? incoming : p));
+        if (incoming.updated_by !== session?.user?.id && draftRef.current === getText(selectedPage?.content)) {
+          setDraft(getText(incoming.content));
+          setLastSaved(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
+        }
+      })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [pageId, session?.user?.id, selectedPage?.id]);
 
   useEffect(() => {
     if (!supabase || !selectedPage || !session?.user?.id) return;
@@ -236,7 +260,7 @@ export default function Home() {
         <div className="side-bottom"><div className="nav-item"><span>◉</span><span className="nav-label">{session.user.email}</span></div><button className="nav-item" style={{ width: "100%", border: 0, background: "transparent", textAlign: "left" }} onClick={() => { if (supabase) void supabase.auth.signOut(); }}><span>↪</span><span className="nav-label">Keluar</span></button></div>
       </aside>
       <section className="main-area">
-        <header className="topbar"><div className="breadcrumb">Workspace / {workspaces.find((w) => w.id === workspaceId)?.name || "Pilih workspace"} / {notebooks.find((b) => b.id === notebookId)?.title || "Notebook"}</div><div className="card-meta">● Tersimpan di cloud</div></header>
+        <header className="topbar"><div className="breadcrumb">Workspace / {workspaces.find((w) => w.id === workspaceId)?.name || "Pilih workspace"} / {notebooks.find((b) => b.id === notebookId)?.title || "Notebook"}</div><div className="card-meta">● Live sync aktif</div></header>
         <div className="content">
           {error && <p className="error">{error}</p>}
           {!workspaces.length ? <div className="empty"><div className="empty-icon">✦</div><h1>Mulai workspace pertamamu</h1><p className="subtle">Buat ruang untuk mengatur notebook dan catatanmu.</p><form onSubmit={createWorkspace} style={{ display: "flex", gap: 8, maxWidth: 420, margin: "22px auto 0" }}><input className="editor-input" value={newWorkspace} onChange={(e) => setNewWorkspace(e.target.value)} placeholder="Contoh: Personal atau Tim Prima" required /><button className="btn primary" disabled={busy}>Buat</button></form></div>
