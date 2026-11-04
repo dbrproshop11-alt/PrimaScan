@@ -125,7 +125,7 @@ export default function Home() {
     event.preventDefault(); if (!supabase || !newWorkspace.trim() || !session) return;
     setBusy(true); setError("");
     const { data, error: createError } = await supabase.from("workspaces").insert({ name: newWorkspace.trim(), owner_id: session.user.id }).select("id").single();
-    if (createError) setError(createError.message);
+    if (createError || !data) { setError(createError?.message || "Workspace gagal dibuat."); }
     else {
       const { error: memberError } = await supabase.from("workspace_members").insert({ workspace_id: data.id, user_id: session.user.id, role: "editor" });
       if (memberError) setError(memberError.message);
@@ -139,7 +139,7 @@ export default function Home() {
     if (!supabase || !name?.trim() || !session) return;
     setBusy(true); setError("");
     const { data, error: createError } = await supabase.from("workspaces").insert({ name: name.trim(), owner_id: session.user.id }).select("id").single();
-    if (createError) setError(createError.message);
+    if (createError || !data) { setError(createError?.message || "Workspace gagal dibuat."); }
     else {
       const { error: memberError } = await supabase.from("workspace_members").insert({ workspace_id: data.id, user_id: session.user.id, role: "editor" });
       if (memberError) setError(memberError.message);
@@ -152,7 +152,7 @@ export default function Home() {
     event.preventDefault(); if (!supabase || !newNotebook.trim() || !workspaceId || !session) return;
     setBusy(true);
     const { data, error: createError } = await supabase.from("notebooks").insert({ title: newNotebook.trim(), workspace_id: workspaceId, created_by: session.user.id, position: notebooks.length }).select("id").single();
-    if (createError) setError(createError.message); else { setNewNotebook(""); await loadData(workspaceId, data.id, ""); }
+    if (createError || !data) setError(createError?.message || "Notebook gagal dibuat."); else { setNewNotebook(""); await loadData(workspaceId, data.id, ""); }
     setBusy(false);
   }
 
@@ -160,7 +160,7 @@ export default function Home() {
     event.preventDefault(); if (!supabase || !newPage.trim() || !notebookId || !session) return;
     setBusy(true);
     const { data, error: createError } = await supabase.from("pages").insert({ title: newPage.trim(), notebook_id: notebookId, created_by: session.user.id, updated_by: session.user.id, position: pages.length }).select("id").single();
-    if (createError) setError(createError.message); else { setNewPage(""); await loadData(workspaceId, notebookId, data.id); }
+    if (createError || !data) setError(createError?.message || "Halaman gagal dibuat."); else { setNewPage(""); await loadData(workspaceId, notebookId, data.id); }
     setBusy(false);
   }
 
