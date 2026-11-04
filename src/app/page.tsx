@@ -129,6 +129,20 @@ export default function Home() {
     setBusy(false);
   }
 
+  async function createWorkspaceQuick() {
+    const name = window.prompt("Nama workspace baru");
+    if (!name?.trim() || !session) return;
+    setBusy(true); setError("");
+    const { data, error: createError } = await supabase.from("workspaces").insert({ name: name.trim(), owner_id: session.user.id }).select("id").single();
+    if (createError) setError(createError.message);
+    else {
+      const { error: memberError } = await supabase.from("workspace_members").insert({ workspace_id: data.id, user_id: session.user.id, role: "editor" });
+      if (memberError) setError(memberError.message);
+      await loadData();
+    }
+    setBusy(false);
+  }
+
   async function createNotebook(event: React.FormEvent) {
     event.preventDefault(); if (!newNotebook.trim() || !workspaceId || !session) return;
     setBusy(true);
@@ -186,7 +200,7 @@ export default function Home() {
       <aside className="sidebar">
         <div className="brand"><div className="brand-mark">P</div><span className="brand-name">Prima Notebook</span></div>
         <div>
-          <div className="workspace-head"><span className="workspace-label">Workspace</span><button className="btn" style={{ padding: "3px 8px" }} onClick={() => { const name = window.prompt("Nama workspace baru"); if (name) { setNewWorkspace(name); setTimeout(() => document.getElementById("workspace-create")?.click(), 0); } }}>+</button></div>
+          <div className="workspace-head"><span className="workspace-label">Workspace</span><button className="btn" style={{ padding: "3px 8px" }} onClick={createWorkspaceQuick}>+</button></div>
           {workspaces.map((w) => <button key={w.id} className={"nav-item " + (workspaceId === w.id ? "active" : "")} style={{ width: "100%", border: 0, background: workspaceId === w.id ? "#282342" : "transparent", textAlign: "left" }} onClick={() => { setWorkspaceId(w.id); setNotebookId(""); setPageId(""); }}><span>▦</span><span className="nav-label">{w.name}</span></button>)}
         </div>
         <div>
