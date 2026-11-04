@@ -155,6 +155,22 @@ export default function Home() {
     return () => window.clearTimeout(timeout);
   }, [draft, selectedPage, session]);
 
+  async function resendConfirmation() {
+    if (!supabase || !email.trim()) { setError("Masukkan email yang digunakan saat mendaftar."); return; }
+    setBusy(true); setError(""); setMessage("");
+    try {
+      const { error: resendError } = await supabase.auth.resend({
+        type: "signup",
+        email: email.trim(),
+        options: { emailRedirectTo: window.location.origin },
+      });
+      if (resendError) throw resendError;
+      setMessage("Email konfirmasi baru telah diminta. Periksa kotak masuk dan folder spam.");
+    } catch (e: any) {
+      setError(e.message || "Gagal mengirim ulang email konfirmasi.");
+    } finally { setBusy(false); }
+  }
+
   async function authenticate(event: React.FormEvent) {
     event.preventDefault(); if (!supabase) { setError("Supabase belum dikonfigurasi."); return; } setBusy(true); setError(""); setMessage("");
     try {
@@ -244,6 +260,7 @@ export default function Home() {
           <button className="btn primary" style={{ width: "100%", marginTop: 8 }} disabled={busy}>{busy ? "Memproses…" : mode === "signin" ? "Masuk" : "Daftar"}</button>
         </form>
         {error && <p className="error">{error}</p>}{message && <p className="success">{message}</p>}
+        <p style={{ textAlign: "center", marginTop: 12 }}><button type="button" className="btn" disabled={busy || !email.trim()} onClick={resendConfirmation}>Kirim ulang email konfirmasi</button></p>
         <p className="subtle" style={{ marginTop: 20, textAlign: "center" }}>{mode === "signin" ? "Belum punya akun?" : "Sudah punya akun?"} <button className="btn" style={{ padding: "5px 9px", marginLeft: 5 }} onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(""); setMessage(""); }}>{mode === "signin" ? "Daftar" : "Masuk"}</button></p>
       </section>
     </main>
