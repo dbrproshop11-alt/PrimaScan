@@ -107,7 +107,9 @@ export default function Home() {
   const selectedPage = useMemo(() => pages.find((p) => p.id === pageId), [pages, pageId]);
 
   const draftRef = useRef(draft);
+  const savedContentRef = useRef(selectedPage?.content);
   useEffect(() => { draftRef.current = draft; }, [draft]);
+  useEffect(() => { savedContentRef.current = selectedPage?.content; }, [selectedPage?.content]);
 
   useEffect(() => {
     if (!supabase || !pageId) return;
@@ -120,15 +122,18 @@ export default function Home() {
         filter: "id=eq." + pageId,
       }, (payload) => {
         const incoming = payload.new as Page;
-        setPages((old) => old.map((p) => p.id === incoming.id ? incoming : p));
-        if (incoming.updated_by !== session?.user?.id && draftRef.current === getText(selectedPage?.content)) {
-          setDraft(getText(incoming.content));
-          setLastSaved(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
+        if (incoming.updated_by === session?.user?.id) return;
+        if (draftRef.current !== getText(savedContentRef.current)) {
+          setError("Halaman berubah dari perangkat lain. Perubahan lokal kamu belum ditimpa; simpan kembali setelah meninjau.");
+          return;
         }
+        setPages((old) => old.map((p) => p.id === incoming.id ? incoming : p));
+        setDraft(getText(incoming.content));
+        setLastSaved(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
       })
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
-  }, [pageId, session?.user?.id, selectedPage?.id]);
+  }, [pageId, session?.user?.id]);
 
   useEffect(() => {
     if (!supabase || !selectedPage || !session?.user?.id) return;
