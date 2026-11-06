@@ -56,6 +56,9 @@ export default function Home() {
   const [newPage, setNewPage] = useState("");
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchIndex, setSearchIndex] = useState(0);
+  const editorRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (!supabase) {
@@ -105,6 +108,39 @@ export default function Home() {
   useEffect(() => { if (session) void loadData(); }, [session, loadData]);
 
   const selectedPage = useMemo(() => pages.find((p) => p.id === pageId), [pages, pageId]);
+  const searchMatches = useMemo(() => {
+    const query = searchQuery.trim().toLocaleLowerCase();
+    if (!query) return [] as number[];
+    const haystack = draft.toLocaleLowerCase();
+    const found: number[] = [];
+    let from = 0;
+    while (from <= haystack.length - query.length) {
+      const at = haystack.indexOf(query, from);
+      if (at === -1) break;
+      found.push(at);
+      from = at + query.length;
+    }
+    return found;
+  }, [draft, searchQuery]);
+
+  useEffect(() => { setSearchIndex(0); }, [searchQuery, pageId]);
+
+  function jumpToSearchMatch(direction: 1 | -1) {
+    if (!searchMatches.length) return;
+    const nextIndex = (searchIndex + direction + searchMatches.length) % searchMatches.length;
+    setSearchIndex(nextIndex);
+    const start = searchMatches[nextIndex];
+    const end = start + searchQuery.trim().length;
+    requestAnimationFrame(() => {
+      const editor = editorRef.current;
+      if (!editor) return;
+      editor.focus();
+      editor.setSelectionRange(start, end);
+      const line = draft.slice(0, start).split("\\n").length;
+      const lineHeight = Number.parseFloat(getComputedStyle(editor).lineHeight) || 22;
+      editor.scrollTop = Math.max(0, (line - 2) * lineHeight);
+    });
+  }
 
   const draftRef = useRef(draft);
   const savedContentRef = useRef(selectedPage?.content);
@@ -330,7 +366,7 @@ export default function Home() {
           : !notebooks.length ? <div className="empty"><div className="empty-icon">▤</div><h1>Buat notebook pertamamu</h1><p className="subtle">Notebook membantu memisahkan catatan berdasarkan topik.</p><form onSubmit={createNotebook} style={{ display: "flex", gap: 8, maxWidth: 420, margin: "22px auto 0" }}><input className="editor-input" value={newNotebook} onChange={(e) => setNewNotebook(e.target.value)} placeholder="Nama notebook" required /><button className="btn primary" disabled={busy}>Buat</button></form></div>
           : <><div className="welcome"><div><div className="eyebrow">Ruang kerja kamu</div><h1>{selectedPage?.title || "Catatan dan ide"}</h1><p className="subtle">Simpan pemikiranmu dan lanjutkan kapan saja.</p></div><div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}><form onSubmit={createPage} style={{ display: "flex", gap: 8, alignItems: "center" }}><input className="editor-input" style={{ width: 150, padding: 9, fontSize: 12 }} value={newPage} onChange={(e) => setNewPage(e.target.value)} placeholder="Nama halaman baru" /><button className="btn primary" disabled={busy}>+ Halaman</button></form>{workspaces.find((w) => w.id === workspaceId)?.owner_id === session.user.id && <button className="btn" style={{ color: "#f28b9b", borderColor: "#713b49" }} onClick={deleteWorkspace} disabled={busy}>Hapus workspace</button>}</div></div>
           <div className="grid-cards" style={{ marginBottom: 20 }}>{pages.map((p) => <button key={p.id} className="card" style={{ textAlign: "left", borderColor: pageId === p.id ? "#8173ef" : undefined }} onClick={() => { setPageId(p.id); setDraft(getText(p.content)); }}><div className="card-title">▤ {p.title}</div><div className="card-meta">Diperbarui {new Date(p.updated_at).toLocaleDateString("id-ID")}</div></button>)}</div>
-          {selectedPage ? <><div className="toolbar"><button className="btn" onClick={() => { const title = window.prompt("Ubah judul halaman", selectedPage.title); if (title) void renamePage(title); }}>Ubah judul</button><button className="btn" onClick={clearPageText} disabled={saving || busy}>Hapus semua teks</button><button className="btn" style={{ color: "#f28b9b", borderColor: "#713b49" }} onClick={deletePage} disabled={saving || busy}>Hapus halaman</button><button className="btn primary" onClick={savePage} disabled={saving || busy}>{saving ? "Menyimpan…" : "Simpan perubahan"}</button><span className="card-meta" style={{ alignSelf: "center" }}>{saving ? "Menyimpan…" : lastSaved ? "Terakhir disimpan " + lastSaved : "Autosave aktif"}</span></div><div className="editor"><textarea value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Mulai tulis catatanmu di sini…" /></div></> : <div className="empty"><div className="empty-icon">✎</div><h2 style={{ fontSize: 18 }}>Pilih atau buat halaman</h2><p className="subtle">Semua catatan dalam notebook ini akan muncul di sini.</p></div>}
+          {selectedPage ? <><div className="toolbar"><button className="btn" onClick={() => { const title = window.prompt("Ubah judul halaman", selectedPage.title); if (title) void renamePage(title); }}>Ubah judul</button><button className="btn" onClick={clearPageText} disabled={saving || busy}>Hapus semua teks</button><button className="btn" style={{ color: "#f28b9b", borderColor: "#713b49" }} onClick={deletePage} disabled={saving || busy}>Hapus halaman</button><button className="btn primary" onClick={savePage} disabled={saving || busy}>{saving ? "Menyimpan…" : "Simpan perubahan"}</button><span className="card-meta" style={{ alignSelf: "center" }}>{saving ? "Menyimpan…" : lastSaved ? "Terakhir disimpan " + lastSaved : "Autosave aktif"}</span></div><div className="search-bar" style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 10 }}><input className="editor-input" aria-label="Cari di halaman ini" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Cari teks di halaman ini…" style={{ flex: "1 1 180px", minWidth: 0, padding: 10 }} />{searchQuery.trim() && <><span className="card-meta" aria-live="polite">{searchMatches.length ? `${Math.min(searchIndex + 1, searchMatches.length)} dari ${searchMatches.length} hasil` : "Tidak ada hasil"}</span><button type="button" className="btn" onClick={() => jumpToSearchMatch(-1)} disabled={!searchMatches.length}>Sebelumnya</button><button type="button" className="btn" onClick={() => jumpToSearchMatch(1)} disabled={!searchMatches.length}>Berikutnya</button><button type="button" className="btn" onClick={() => setSearchQuery("")}>Tutup</button></>}</div><div className="editor"><textarea ref={editorRef} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Mulai tulis catatanmu di sini…" /></div></> : <div className="empty"><div className="empty-icon">✎</div><h2 style={{ fontSize: 18 }}>Pilih atau buat halaman</h2><p className="subtle">Semua catatan dalam notebook ini akan muncul di sini.</p></div>}
           </>}
         </div>
       </section>
